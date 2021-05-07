@@ -28,6 +28,7 @@ import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.google.errorprone.annotations.DoNotCall;
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
@@ -75,6 +76,8 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
    * Returns the empty immutable list. This list behaves and performs comparably to {@link
    * Collections#emptyList}, and is preferable mainly for consistency and maintainability of your
    * code.
+   *
+   * <p><b>Performance note:</b> the instance returned is a singleton.
    */
   // Casting to any type is safe because the list will never hold any elements.
   @SuppressWarnings("unchecked")
@@ -492,6 +495,7 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
   @CanIgnoreReturnValue
   @Deprecated
   @Override
+  @DoNotCall("Always throws UnsupportedOperationException")
   public final boolean addAll(int index, Collection<? extends E> newElements) {
     throw new UnsupportedOperationException();
   }
@@ -505,6 +509,7 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
   @CanIgnoreReturnValue
   @Deprecated
   @Override
+  @DoNotCall("Always throws UnsupportedOperationException")
   public final E set(int index, E element) {
     throw new UnsupportedOperationException();
   }
@@ -517,6 +522,7 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
    */
   @Deprecated
   @Override
+  @DoNotCall("Always throws UnsupportedOperationException")
   public final void add(int index, E element) {
     throw new UnsupportedOperationException();
   }
@@ -530,6 +536,7 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
   @CanIgnoreReturnValue
   @Deprecated
   @Override
+  @DoNotCall("Always throws UnsupportedOperationException")
   public final E remove(int index) {
     throw new UnsupportedOperationException();
   }
@@ -542,6 +549,7 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
    */
   @Deprecated
   @Override
+  @DoNotCall("Always throws UnsupportedOperationException")
   public final void replaceAll(UnaryOperator<E> operator) {
     throw new UnsupportedOperationException();
   }
@@ -554,6 +562,7 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
    */
   @Deprecated
   @Override
+  @DoNotCall("Always throws UnsupportedOperationException")
   public final void sort(Comparator<? super E> c) {
     throw new UnsupportedOperationException();
   }
@@ -562,7 +571,9 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
    * Returns this list instance.
    *
    * @since 2.0
+   * @deprecated There is no reason to use this; it always returns {@code this}.
    */
+  @Deprecated
   @Override
   public final ImmutableList<E> asList() {
     return this;

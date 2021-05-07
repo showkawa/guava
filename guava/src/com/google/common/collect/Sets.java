@@ -137,42 +137,6 @@ public final class Sets {
     }
   }
 
-  private static final class Accumulator<E extends Enum<E>> {
-    static final Collector<Enum<?>, ?, ImmutableSet<? extends Enum<?>>> TO_IMMUTABLE_ENUM_SET =
-        (Collector)
-            Collector.<Enum, Accumulator, ImmutableSet<?>>of(
-                Accumulator::new,
-                Accumulator::add,
-                Accumulator::combine,
-                Accumulator::toImmutableSet,
-                Collector.Characteristics.UNORDERED);
-
-    private @Nullable EnumSet<E> set;
-
-    void add(E e) {
-      if (set == null) {
-        set = EnumSet.of(e);
-      } else {
-        set.add(e);
-      }
-    }
-
-    Accumulator<E> combine(Accumulator<E> other) {
-      if (this.set == null) {
-        return other;
-      } else if (other.set == null) {
-        return this;
-      } else {
-        this.set.addAll(other.set);
-        return this;
-      }
-    }
-
-    ImmutableSet<E> toImmutableSet() {
-      return (set == null) ? ImmutableSet.<E>of() : ImmutableEnumSet.asImmutable(set);
-    }
-  }
-
   /**
    * Returns a {@code Collector} that accumulates the input elements into a new {@code ImmutableSet}
    * with an implementation specialized for enums. Unlike {@link ImmutableSet#toImmutableSet}, the
@@ -181,7 +145,7 @@ public final class Sets {
    * @since 21.0
    */
   public static <E extends Enum<E>> Collector<E, ?, ImmutableSet<E>> toImmutableEnumSet() {
-    return (Collector) Accumulator.TO_IMMUTABLE_ENUM_SET;
+    return CollectCollectors.toImmutableEnumSet();
   }
 
   /**
@@ -253,7 +217,7 @@ public final class Sets {
    */
   public static <E> HashSet<E> newHashSet(Iterable<? extends E> elements) {
     return (elements instanceof Collection)
-        ? new HashSet<E>(Collections2.cast(elements))
+        ? new HashSet<E>((Collection<? extends E>) elements)
         : newHashSet(elements.iterator());
   }
 
@@ -302,7 +266,7 @@ public final class Sets {
    * @since 15.0
    */
   public static <E> Set<E> newConcurrentHashSet() {
-    return Collections.newSetFromMap(new ConcurrentHashMap<E, Boolean>());
+    return Platform.newConcurrentHashSet();
   }
 
   /**
@@ -358,7 +322,7 @@ public final class Sets {
    */
   public static <E> LinkedHashSet<E> newLinkedHashSet(Iterable<? extends E> elements) {
     if (elements instanceof Collection) {
-      return new LinkedHashSet<E>(Collections2.cast(elements));
+      return new LinkedHashSet<E>((Collection<? extends E>) elements);
     }
     LinkedHashSet<E> set = newLinkedHashSet();
     Iterables.addAll(set, elements);
@@ -486,7 +450,7 @@ public final class Sets {
     // quadratic cost of adding them to the COWAS directly.
     Collection<? extends E> elementsCollection =
         (elements instanceof Collection)
-            ? Collections2.cast(elements)
+            ? (Collection<? extends E>) elements
             : Lists.newArrayList(elements);
     return new CopyOnWriteArraySet<E>(elementsCollection);
   }
@@ -718,8 +682,8 @@ public final class Sets {
    * that is not contained in {@code set1}.
    *
    * <p>Results are undefined if {@code set1} and {@code set2} are sets based on different
-   * equivalence relations (as {@link HashSet}, {@link TreeSet}, and the {@link Map#keySet} of an
-   * {@code IdentityHashMap} all are).
+   * equivalence relations, for example if {@code set1} is a {@link HashSet} and {@code set2} is a
+   * {@link TreeSet} or the {@link Map#keySet} of an {@code IdentityHashMap}.
    */
   public static <E> SetView<E> union(final Set<? extends E> set1, final Set<? extends E> set2) {
     checkNotNull(set1, "set1");
@@ -799,8 +763,8 @@ public final class Sets {
    * matches that of {@code set1}.
    *
    * <p>Results are undefined if {@code set1} and {@code set2} are sets based on different
-   * equivalence relations (as {@code HashSet}, {@code TreeSet}, and the keySet of an {@code
-   * IdentityHashMap} all are).
+   * equivalence relations, for example if {@code set1} is a {@link HashSet} and {@code set2} is a
+   * {@link TreeSet} or the {@link Map#keySet} of an {@code IdentityHashMap}.
    *
    * <p><b>Note:</b> The returned view performs slightly better when {@code set1} is the smaller of
    * the two sets. If you have reason to believe one of your sets will generally be smaller than the
@@ -888,8 +852,8 @@ public final class Sets {
    * order of the returned set matches that of {@code set1}.
    *
    * <p>Results are undefined if {@code set1} and {@code set2} are sets based on different
-   * equivalence relations (as {@code HashSet}, {@code TreeSet}, and the keySet of an {@code
-   * IdentityHashMap} all are).
+   * equivalence relations, for example if {@code set1} is a {@link HashSet} and {@code set2} is a
+   * {@link TreeSet} or the {@link Map#keySet} of an {@code IdentityHashMap}.
    */
   public static <E> SetView<E> difference(final Set<E> set1, final Set<?> set2) {
     checkNotNull(set1, "set1");
@@ -953,8 +917,8 @@ public final class Sets {
    * both. The iteration order of the returned set is undefined.
    *
    * <p>Results are undefined if {@code set1} and {@code set2} are sets based on different
-   * equivalence relations (as {@code HashSet}, {@code TreeSet}, and the keySet of an {@code
-   * IdentityHashMap} all are).
+   * equivalence relations, for example if {@code set1} is a {@link HashSet} and {@code set2} is a
+   * {@link TreeSet} or the {@link Map#keySet} of an {@code IdentityHashMap}.
    *
    * @since 3.0
    */

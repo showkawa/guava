@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkElementIndex;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkPositionIndexes;
+import static com.google.common.base.Strings.lenientFormat;
 import static java.lang.Double.NEGATIVE_INFINITY;
 import static java.lang.Double.POSITIVE_INFINITY;
 
@@ -35,7 +36,7 @@ import java.util.List;
 import java.util.RandomAccess;
 import java.util.Spliterator;
 import java.util.Spliterators;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import javax.annotation.CheckForNull;
 
 /**
  * Static utility methods pertaining to {@code double} primitives, that are not already found in
@@ -48,6 +49,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @since 1.0
  */
 @GwtCompatible(emulated = true)
+@ElementTypesAreNonnullByDefault
 public final class Doubles extends DoublesMethodsForWeb {
   private Doubles() {}
 
@@ -255,8 +257,13 @@ public final class Doubles extends DoublesMethodsForWeb {
    */
   @Beta
   public static double constrainToRange(double value, double min, double max) {
-    checkArgument(min <= max, "min (%s) must be less than or equal to max (%s)", min, max);
-    return Math.min(Math.max(value, min), max);
+    // avoid auto-boxing by not using Preconditions.checkArgument(); see Guava issue 3984
+    // Reject NaN by testing for the good case (min <= max) instead of the bad (min > max).
+    if (min <= max) {
+      return Math.min(Math.max(value, min), max);
+    }
+    throw new IllegalArgumentException(
+        lenientFormat("min (%s) must be less than or equal to max (%s)", min, max));
   }
 
   /**
@@ -554,14 +561,14 @@ public final class Doubles extends DoublesMethodsForWeb {
     }
 
     @Override
-    public boolean contains(Object target) {
+    public boolean contains(@CheckForNull Object target) {
       // Overridden to prevent a ton of boxing
       return (target instanceof Double)
           && Doubles.indexOf(array, (Double) target, start, end) != -1;
     }
 
     @Override
-    public int indexOf(Object target) {
+    public int indexOf(@CheckForNull Object target) {
       // Overridden to prevent a ton of boxing
       if (target instanceof Double) {
         int i = Doubles.indexOf(array, (Double) target, start, end);
@@ -573,7 +580,7 @@ public final class Doubles extends DoublesMethodsForWeb {
     }
 
     @Override
-    public int lastIndexOf(Object target) {
+    public int lastIndexOf(@CheckForNull Object target) {
       // Overridden to prevent a ton of boxing
       if (target instanceof Double) {
         int i = Doubles.lastIndexOf(array, (Double) target, start, end);
@@ -604,7 +611,7 @@ public final class Doubles extends DoublesMethodsForWeb {
     }
 
     @Override
-    public boolean equals(@Nullable Object object) {
+    public boolean equals(@CheckForNull Object object) {
       if (object == this) {
         return true;
       }
@@ -703,7 +710,8 @@ public final class Doubles extends DoublesMethodsForWeb {
    */
   @Beta
   @GwtIncompatible // regular expressions
-  public static @Nullable Double tryParse(String string) {
+  @CheckForNull
+  public static Double tryParse(String string) {
     if (FLOATING_POINT_PATTERN.matcher(string).matches()) {
       // TODO(lowasser): could be potentially optimized, but only with
       // extensive testing
